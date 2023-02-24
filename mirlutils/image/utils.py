@@ -1,6 +1,20 @@
 import numpy as np
 import SimpleITK as sitk 
 import pydicom
+import matplotlib.pyplot as plt
+
+def imshow(array:np.array, vmin=None, vmax=None, title:str=None):
+    plt.figure(figsize=(6,6))
+    if title:
+        plt.title(title, fontsize=15)
+    array = array.squeeze()
+    if len(array.shape) == 2:
+        plt.imshow(array, cmap='gray', vmin=vmin, vmax=vmax)
+    else:
+        plt.imshow(array)
+    plt.axis('off')
+    plt.tight_layout()
+    plt.show()    
 
 def dicom_to_nifti(src:str , dst:str):
     """
@@ -36,7 +50,6 @@ def windowing(array, wl, ww, normalize=True):
     else:
         return np.clip(array, lower_bound, upper_bound) 
 
-# Save as dicom file
 def save_dicom(src_dicom_path:str, pixel_array:np.array, dst_dicom_path:str):
     """
     Save output image to dicom
@@ -57,3 +70,10 @@ def save_dicom(src_dicom_path:str, pixel_array:np.array, dst_dicom_path:str):
         dcm[0x0028,0x0107].VR = 'US'
 
     dcm.save_as(dst_dicom_path)
+
+def flip_mask(src_mask_path:str, dst_mask_path:str):
+    image = sitk.ReadImage(src_mask_path)
+    mask_arr = sitk.GetArrayFromImage(image)
+    mask_arr = np.flip(mask_arr, axis=1)
+    fliped_arr = sitk.GetImageFromArray(mask_arr)
+    sitk.WriteImage(fliped_arr, dst_mask_path)
