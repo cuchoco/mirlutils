@@ -1,3 +1,2 @@
-# For medical image Analysis
+# For Medical Image Analysis
 ## image
-## metrics
