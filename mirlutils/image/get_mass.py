@@ -7,7 +7,7 @@ class GetMass:
         self.image_size = image_size
         self.pad_size = image_size + 38
 
-    def get_body(self, img_in):    
+    def _get_body(self, img_in):    
         mask_out = np.copy(img_in)
         mask_out[mask_out > self.th_air] = 0
         mask_out[mask_out <= self.th_air] = 1
@@ -26,28 +26,28 @@ class GetMass:
 
         return mask_out
     
-    def get_mask_img(self, img):
+    def _get_mask_img(self, img):
         min_val = img.min()
-        mask = self.get_body(img)
+        mask = self._get_body(img)
         img[mask != 1] = min_val
         return img
     
-    def padding(self, img):
+    def _padding(self, img):
         r, c = self.image_size, self.image_size
         new = np.zeros((self.pad_size,self.pad_size)) + img.min()
         rstart , cstart = int((self.pad_size - r)/2 - 1), int((self.pad_size - c)/2 - 1)
         new[rstart:r+rstart, cstart:c+cstart] = img
         return new
         
-    def padding_rev(self, img):
+    def _padding_rev(self, img):
         r, c = self.image_size, self.image_size
         rstart , cstart = int((self.pad_size - r)/2 - 1), int((self.pad_size - c)/2 - 1)
         return img[rstart:r+rstart, cstart:c+cstart]
     
     def __call__(self, img):
         img = img.squeeze()
-        img = self.padding(img)
-        img = self.get_mask_img(img)
-        img = self.padding_rev(img)
+        img = self._padding(img)
+        img = self._get_mask_img(img)
+        img = self._padding_rev(img)
         return img
     
