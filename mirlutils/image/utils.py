@@ -2,8 +2,12 @@ import numpy as np
 import SimpleITK as sitk 
 import pydicom
 import matplotlib.pyplot as plt
+import os
 
 def imshow(array:np.array, vmin=None, vmax=None, title:str=None):
+    """
+    Show medical image
+    """
     plt.figure(figsize=(6,6))
     if title:
         plt.title(title, fontsize=15)
@@ -29,10 +33,16 @@ def dicom_to_nifti(src:str , dst:str):
 
 def get_array(file_path:str, dtype=np.float64):
     """
-    Get numpy array from .img, .dcm, .hdr, .nii
+    Get numpy array from .img, .dcm, .hdr, .nii, or dicom directory
     file_path : path
     """
-    temp = sitk.ReadImage(str(file_path))
+    if os.path.isdir(file_path):
+        reader = sitk.ImageSeriesReader()
+        dicoms = reader.GetGDCMSeriesFileNames(str(file_path))
+        reader.SetFileNames(dicoms)
+        temp = reader.Execute()
+    else:
+        temp = sitk.ReadImage(str(file_path))
     return sitk.GetArrayFromImage(temp).astype(dtype)
 
 def windowing(array, wl, ww, normalize=True):
@@ -72,8 +82,14 @@ def save_dicom(src_dicom_path:str, pixel_array:np.array, dst_dicom_path:str):
     dcm.save_as(dst_dicom_path)
 
 def flip_mask(src_mask_path:str, dst_mask_path:str):
-    image = sitk.ReadImage(src_mask_path)
-    mask_arr = sitk.GetArrayFromImage(image)
-    mask_arr = np.flip(mask_arr, axis=1)
-    fliped_arr = sitk.GetImageFromArray(mask_arr)
-    sitk.WriteImage(fliped_arr, dst_mask_path)
+    """
+    Use when the mask is flipped by rows.
+    """
+    mask_arr = sitk.GetArrayFromImage(sitk.ReadImage(src_mask_path))
+
+    if len(mask_arr.shape) == 3:
+        fliped_image = sitk.GetImageFromArray(np.flip(mask_arr, axis=1))
+    elif len(mask_arr.shape) == 2:
+        fliped_image = sitk.GetImageFromArray(np.flip(mask_arr, axis=0))
+        
+    sitk.WriteImage(fliped_image, dst_mask_path)
